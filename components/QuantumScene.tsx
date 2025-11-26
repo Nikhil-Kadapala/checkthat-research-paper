@@ -4,77 +4,231 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, MeshDistortMaterial, Sphere, Torus, Stars, Environment, Box, Points, PointMaterial } from '@react-three/drei';
+import { Float, Torus, Environment, Stars, Box, Text, Instance, Instances, Sphere, Edges } from '@react-three/drei';
 import * as THREE from 'three';
 
-const DataParticle = ({ position, color, scale = 1 }: { position: [number, number, number]; color: string; scale?: number }) => {
-  const ref = useRef<THREE.Mesh>(null);
+// --- NLP VISUALIZATION COMPONENTS ---
+
+// Represents Social Media Posts (Structured Cards with Platform colors)
+const SocialMediaStream = ({ count = 40 }: { count?: number }) => {
+  const meshRef = useRef<THREE.Group>(null);
   
+  // Generate random posts
+  const posts = useMemo(() => {
+    const platforms = [
+        { color: "#000000", name: "X" }, // X (Twitter)
+        { color: "#1877F2", name: "FB" }, // Facebook
+        { color: "#FF4500", name: "RD" }, // Reddit
+        { color: "#C13584", name: "IG" }  // Instagram
+    ];
+    
+    return new Array(count).fill(0).map((_, i) => ({
+      x: -15 - Math.random() * 10, // Start far left
+      y: (Math.random() - 0.5) * 8,
+      z: (Math.random() - 0.5) * 6,
+      rotation: [Math.random() * 0.5, Math.random() * 0.5, 0] as [number, number, number],
+      speed: 0.05 + Math.random() * 0.08,
+      platform: platforms[Math.floor(Math.random() * platforms.length)]
+    }));
+  }, [count]);
+
   useFrame((state) => {
-    if (ref.current) {
-      const t = state.clock.getElapsedTime();
-      ref.current.position.y = position[1] + Math.sin(t * 1.5 + position[0]) * 0.1;
-      ref.current.rotation.x = t * 0.2;
-      ref.current.rotation.z = t * 0.1;
-    }
+    if (!meshRef.current) return;
+    
+    meshRef.current.children.forEach((child, i) => {
+      const p = posts[i];
+      
+      // Move right
+      p.x += p.speed;
+      
+      // Reset loop (disappear into the neural net at x=-3)
+      if (p.x > -3) {
+        p.x = -15 - Math.random() * 5;
+        // Randomize Y slightly on reset
+        p.y = (Math.random() - 0.5) * 8;
+      }
+
+      child.position.set(p.x, p.y, p.z);
+      child.rotation.set(
+        Math.sin(state.clock.elapsedTime * 0.5 + i) * 0.1, 
+        Math.sin(state.clock.elapsedTime * 0.3 + i) * 0.1, 
+        0
+      );
+    });
   });
 
   return (
-    <Sphere ref={ref} args={[1, 32, 32]} position={position} scale={scale}>
-      <MeshDistortMaterial
-        color={color}
-        envMapIntensity={1}
-        clearcoat={1}
-        clearcoatRoughness={0}
-        metalness={0.2}
-        roughness={0.4}
-        distort={0.3}
-        speed={1.5}
-      />
-    </Sphere>
+    <group ref={meshRef}>
+        {posts.map((post, i) => (
+            <group key={i}>
+                {/* Card Background */}
+                <Box args={[1.2, 0.8, 0.05]}>
+                    <meshStandardMaterial color="white" />
+                </Box>
+                {/* Header Bar */}
+                <Box args={[1.2, 0.2, 0.06]} position={[0, 0.3, 0]}>
+                    <meshStandardMaterial color={post.platform.color} />
+                </Box>
+                {/* Simulated Text Lines */}
+                <Box args={[0.8, 0.05, 0.06]} position={[0, 0, 0]}>
+                    <meshStandardMaterial color="#cbd5e1" />
+                </Box>
+                <Box args={[0.8, 0.05, 0.06]} position={[0, -0.15, 0]}>
+                    <meshStandardMaterial color="#cbd5e1" />
+                </Box>
+            </group>
+        ))}
+    </group>
   );
 };
 
-const AbstractNetwork = () => {
-    const ref = useRef<THREE.Group>(null);
+// Represents Normalized Claims (Clean, Glowing Strips)
+const NormalizedClaims = ({ count = 12 }: { count?: number }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  
+  const claims = useMemo(() => {
+    return new Array(count).fill(0).map((_, i) => ({
+      x: i * 2.5 + 3, // Start appearing after x=3
+      speed: 0.04
+    }));
+  }, [count]);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    
+    groupRef.current.children.forEach((child, i) => {
+      const c = claims[i];
+      c.x += c.speed;
+      
+      if (c.x > 18) {
+        c.x = 3; // Reset near the center output
+      }
+
+      child.position.set(c.x, Math.sin(state.clock.elapsedTime + i) * 0.2, 0);
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+        {claims.map((c, i) => (
+            <group key={i}>
+                {/* Main Text Strip */}
+                <Box args={[2, 0.3, 0.05]}>
+                    <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} />
+                </Box>
+                {/* Gold Highlight (Signifying "Fact/Claim") */}
+                <Box args={[0.1, 0.3, 0.06]} position={[-0.95, 0, 0]}>
+                    <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={1} />
+                </Box>
+                {/* Simulated Text */}
+                <Box args={[1.4, 0.05, 0.06]} position={[0.1, 0, 0]}>
+                    <meshStandardMaterial color="#94a3b8" />
+                </Box>
+            </group>
+        ))}
+    </group>
+  );
+};
+
+// The Processing Unit: A Large, Explicit Neural Core
+const NeuralFilterNetwork = () => {
+    const meshRef = useRef<THREE.Mesh>(null);
+    const innerCoreRef = useRef<THREE.Mesh>(null);
+    const outerGlowRef1 = useRef<THREE.Mesh>(null);
+    
     useFrame((state) => {
-        if(ref.current) {
-            ref.current.rotation.y = state.clock.getElapsedTime() * 0.05;
+        const time = state.clock.elapsedTime;
+        if(meshRef.current) {
+             meshRef.current.rotation.x = time * 0.1;
+             meshRef.current.rotation.y = time * 0.15;
         }
-    })
+        
+        // Pulsating Inner Core
+        if(innerCoreRef.current) {
+             const scale = 1 + Math.sin(time * 3) * 0.05;
+             innerCoreRef.current.scale.set(scale, scale, scale);
+        }
+
+        // Rotating Glow Layers
+        if(outerGlowRef1.current) {
+            outerGlowRef1.current.rotation.z = -time * 0.2;
+            outerGlowRef1.current.rotation.x = time * 0.1;
+        }
+    });
 
     return (
-        <group ref={ref}>
-            <Torus args={[3.5, 0.05, 16, 100]} rotation={[Math.PI / 2, 0, 0]}>
-                <meshStandardMaterial color="#475569" transparent opacity={0.3} />
-            </Torus>
-            <Torus args={[2.5, 0.02, 16, 100]} rotation={[Math.PI / 3, 0, 0]}>
-                <meshStandardMaterial color="#3B82F6" transparent opacity={0.4} />
-            </Torus>
+        <group position={[0, 0, 0]}>
+             {/* Large Outer Network Architecture - Explicit Wireframe */}
+             <mesh ref={meshRef}>
+                 <icosahedronGeometry args={[2.8, 1]} />
+                 {/* Faint Hull to give it volume */}
+                 <meshStandardMaterial 
+                    color="#e0f2fe" // Very light blue
+                    transparent
+                    opacity={0.15}
+                    side={THREE.DoubleSide}
+                    depthWrite={false}
+                 />
+                 {/* Visible Thick Edges */}
+                 <Edges 
+                    scale={1.0} 
+                    threshold={15} // Display edges > 15 degrees
+                    color="#0284c7" // Vivid Sky Blue (700)
+                 />
+             </mesh>
+             
+             {/* Secondary Inner Wireframe for Complexity */}
+             <mesh rotation={[0.5, 0.5, 0]}>
+                 <icosahedronGeometry args={[1.8, 0]} />
+                 <meshStandardMaterial color="#6366f1" wireframe transparent opacity={0.3} />
+             </mesh>
+             
+             {/* Core Energy - Bright Ocean/Steel Blue Source */}
+             <mesh ref={innerCoreRef}>
+                 <sphereGeometry args={[0.8, 32, 32]} />
+                 <meshBasicMaterial color="#0077be" />
+                 <pointLight intensity={3} color="#38bdf8" distance={6} />
+             </mesh>
+
+             {/* Volumetric Glow Layer */}
+             <mesh ref={outerGlowRef1}>
+                 <sphereGeometry args={[1.2, 32, 32]} />
+                 <meshBasicMaterial 
+                    color="#0ea5e9"
+                    transparent
+                    opacity={0.4}
+                    blending={THREE.AdditiveBlending}
+                    side={THREE.DoubleSide}
+                 />
+             </mesh>
         </group>
     )
 }
 
 export const HeroScene: React.FC = () => {
   return (
-    <div className="absolute inset-0 z-0 opacity-60 pointer-events-none">
-      <Canvas camera={{ position: [0, 0, 6], fov: 45 }}>
+    <div className="absolute inset-0 z-0 opacity-90 pointer-events-none">
+      <Canvas camera={{ position: [0, 0, 14], fov: 35 }}>
         <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} color="#3B82F6" />
-        <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
-          <DataParticle position={[0, 0, 0]} color="#1E293B" scale={1.2} />
-          <AbstractNetwork />
-        </Float>
-        
-        <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
-           <DataParticle position={[-3, 1, -2]} color="#3B82F6" scale={0.5} />
-           <DataParticle position={[3, -1, -3]} color="#94A3B8" scale={0.6} />
-        </Float>
+        <pointLight position={[10, 10, 10]} intensity={1} color="white" />
+        <pointLight position={[-10, -5, 5]} intensity={0.5} color="#94a3b8" />
+
+        <group position={[0, -0.5, 0]}>
+            {/* 1. Input: Social Media Stream (Left) */}
+            <SocialMediaStream count={35} />
+            
+            {/* 2. Process: Neural Filter (Center) */}
+            <NeuralFilterNetwork />
+            
+            {/* 3. Output: Normalized Claims (Right) */}
+            <NormalizedClaims count={8} />
+        </group>
 
         <Environment preset="city" />
-        <Stars radius={100} depth={50} count={1500} factor={4} saturation={0} fade speed={0.5} />
+        {/* Subtle background stars/particles */}
+        <Stars radius={100} depth={50} count={500} factor={4} saturation={0} fade speed={0.2} />
       </Canvas>
     </div>
   );
@@ -91,32 +245,26 @@ export const AbstractDataScene: React.FC = () => {
         
         <Float rotationIntensity={0.2} floatIntensity={0.2} speed={1}>
           <group rotation={[0, Math.PI / 4, 0]}>
-             {/* Central Monolith */}
+             {/* Central Processing Unit Representation */}
              <Box args={[1.5, 2, 1.5]}>
-                <meshStandardMaterial color="#1E293B" metalness={0.8} roughness={0.2} />
+                <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.2} />
              </Box>
              
-             {/* Glowing Core */}
-             <Box args={[1.55, 0.1, 1.55]} position={[0, 0, 0]}>
-                <meshBasicMaterial color="#3B82F6" transparent opacity={0.5} />
+             {/* Glowing Data Layers */}
+             <Box args={[1.6, 0.05, 1.6]} position={[0, 0, 0]}>
+                <meshBasicMaterial color="#3B82F6" transparent opacity={0.6} />
              </Box>
-             <Box args={[1.55, 0.1, 1.55]} position={[0, 0.5, 0]}>
-                <meshBasicMaterial color="#3B82F6" transparent opacity={0.3} />
+             <Box args={[1.6, 0.05, 1.6]} position={[0, 0.6, 0]}>
+                <meshBasicMaterial color="#3B82F6" transparent opacity={0.4} />
              </Box>
-             <Box args={[1.55, 0.1, 1.55]} position={[0, -0.5, 0]}>
-                <meshBasicMaterial color="#3B82F6" transparent opacity={0.3} />
+             <Box args={[1.6, 0.05, 1.6]} position={[0, -0.6, 0]}>
+                <meshBasicMaterial color="#3B82F6" transparent opacity={0.4} />
              </Box>
 
-             {/* Orbiting data points */}
+             {/* Orbiting Elements */}
              <group>
-                 <Sphere args={[0.1]} position={[1.5, 1, 0]}>
-                    <meshStandardMaterial color="#3B82F6" />
-                 </Sphere>
-                 <Sphere args={[0.1]} position={[-1.5, -1, 0]}>
-                    <meshStandardMaterial color="#3B82F6" />
-                 </Sphere>
-                 <Torus args={[2, 0.02, 16, 64]} rotation={[Math.PI/2, 0, 0]}>
-                     <meshBasicMaterial color="#94A3B8" transparent opacity={0.2} />
+                 <Torus args={[2.2, 0.02, 16, 64]} rotation={[Math.PI/2, 0, 0]}>
+                     <meshBasicMaterial color="#94A3B8" transparent opacity={0.3} />
                  </Torus>
              </group>
           </group>

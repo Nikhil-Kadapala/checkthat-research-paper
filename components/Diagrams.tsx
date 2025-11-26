@@ -5,63 +5,196 @@
 */
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Activity, Cpu, BarChart2, Share2, Layers, Database, MessageSquare, CheckCircle, Search, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Activity, Cpu, BarChart2, Share2, Layers, Database, MessageSquare, CheckCircle, RefreshCw, Zap, ArrowRight, AlertCircle } from 'lucide-react';
 
-// --- NETWORK TOPOLOGY DIAGRAM (Methodology: Transformer/Fine-tuning) ---
+// --- FINE-TUNING PROCESS VISUALIZER ---
 export const NetworkTopologyDiagram: React.FC = () => {
-  const [activeNodes, setActiveNodes] = useState<number[]>([]);
+  const [phase, setPhase] = useState<'idle' | 'forward_bad' | 'error' | 'backprop' | 'update' | 'forward_good' | 'success'>('idle');
   
-  // Graph representing LLM Fine-tuning topology
-  const nodes = [
-    { id: 0, x: '20%', y: '50%', label: 'Input' },
-    { id: 1, x: '50%', y: '20%', label: 'Attention' },
-    { id: 2, x: '50%', y: '80%', label: 'Feed Fwd' },
-    { id: 3, x: '80%', y: '50%', label: 'Output' },
-  ];
-
-  const toggleNode = (id: number) => {
-    setActiveNodes(prev => prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]);
+  const runSimulation = () => {
+    if (phase !== 'idle' && phase !== 'success') return;
+    
+    // Animation Sequence
+    setPhase('forward_bad');
+    setTimeout(() => setPhase('error'), 1500);
+    setTimeout(() => setPhase('backprop'), 2500);
+    setTimeout(() => setPhase('update'), 4000);
+    setTimeout(() => setPhase('forward_good'), 5500);
+    setTimeout(() => setPhase('success'), 7000);
+    setTimeout(() => setPhase('idle'), 9000);
   };
 
+  // Node positions
+  const layers = [
+    { x: 50, count: 3, label: "Input" },
+    { x: 150, count: 4, label: "Hidden" },
+    { x: 250, count: 2, label: "Output" }
+  ];
+
+  // Generate connections
+  const connections = [];
+  for (let i = 0; i < layers.length - 1; i++) {
+    for (let j = 0; j < layers[i].count; j++) {
+        for (let k = 0; k < layers[i+1].count; k++) {
+            connections.push({
+                id: `l${i}-${j}-to-l${i+1}-${k}`,
+                x1: layers[i].x,
+                y1: 50 + (j * 40) - ((layers[i].count-1)*20),
+                x2: layers[i+1].x,
+                y2: 50 + (k * 40) - ((layers[i+1].count-1)*20),
+                layer: i
+            });
+        }
+    }
+  }
+
+  const isTuned = phase === 'update' || phase === 'forward_good' || phase === 'success';
+
   return (
-    <div className="flex flex-col items-center p-8 bg-white rounded-xl shadow-sm border border-stone-200 my-8">
-      <h3 className="font-serif text-xl mb-4 text-stone-800">Model Architecture: FLAN-T5</h3>
-      <p className="text-sm text-stone-500 mb-6 text-center max-w-md">
-        We fine-tuned the 783M parameter FLAN-T5 Large model. Click nodes to simulate the data flow during claim extraction.
-      </p>
-      
-      <div className="relative w-64 h-64 bg-[#F9F9FA] rounded-lg border border-stone-200 p-4 flex flex-wrap justify-between content-between relative">
-         {/* Connecting Lines */}
-         <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
-            <line x1="20%" y1="50%" x2="50%" y2="20%" stroke="#333" strokeWidth="2" />
-            <line x1="20%" y1="50%" x2="50%" y2="80%" stroke="#333" strokeWidth="2" />
-            <line x1="50%" y1="20%" x2="80%" y2="50%" stroke="#333" strokeWidth="2" />
-            <line x1="50%" y1="80%" x2="80%" y2="50%" stroke="#333" strokeWidth="2" />
-            <line x1="50%" y1="20%" x2="50%" y2="80%" stroke="#333" strokeWidth="1" strokeDasharray="4" />
+    <div className="flex flex-col items-center p-8 bg-white rounded-xl shadow-sm border border-stone-200 my-8 w-full max-w-lg mx-auto">
+      <div className="flex justify-between items-center w-full mb-6">
+        <div>
+            <h3 className="font-serif text-xl text-stone-900">Fine-Tuning Process</h3>
+            <p className="text-xs text-stone-500 uppercase tracking-wider font-bold mt-1">Weight Adaptation Logic</p>
+        </div>
+        <button 
+            onClick={runSimulation}
+            disabled={phase !== 'idle' && phase !== 'success'}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${phase === 'idle' || phase === 'success' ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-md cursor-pointer' : 'bg-stone-100 text-stone-400 cursor-not-allowed'}`}
+        >
+            <RefreshCw size={14} className={phase !== 'idle' && phase !== 'success' ? 'animate-spin' : ''} />
+            {phase === 'idle' || phase === 'success' ? 'Start Training' : 'Training...'}
+        </button>
+      </div>
+
+      <div className="relative w-full h-64 bg-[#F9F9FA] rounded-lg border border-stone-200 overflow-hidden select-none">
+         <svg className="w-full h-full" viewBox="0 0 300 150">
+            {/* Connections */}
+            {connections.map((conn) => (
+                <motion.line 
+                    key={conn.id}
+                    x1={conn.x1} y1={conn.y1}
+                    x2={conn.x2} y2={conn.y2}
+                    strokeWidth={isTuned ? 2 : 1}
+                    initial={{ stroke: "#e2e8f0" }}
+                    animate={{ 
+                        stroke: isTuned ? "#3b82f6" : "#e2e8f0",
+                        opacity: isTuned ? 0.8 : 0.4 
+                    }}
+                    transition={{ duration: 1 }}
+                />
+            ))}
+
+            {/* Backprop Gradients (Reverse Flow) */}
+            <AnimatePresence>
+                {phase === 'backprop' && connections.map((conn, i) => (
+                    <motion.circle
+                        key={`grad-${i}`}
+                        r={2}
+                        fill="#ef4444"
+                        initial={{ cx: conn.x2, cy: conn.y2, opacity: 0 }}
+                        animate={{ 
+                            cx: conn.x1, 
+                            cy: conn.y1, 
+                            opacity: [0, 1, 0],
+                        }}
+                        transition={{ 
+                            duration: 0.8, 
+                            delay: Math.random() * 0.2 + (conn.layer === 1 ? 0 : 0.5), // Reverse layer order timing
+                            ease: "easeInOut"
+                        }}
+                    />
+                ))}
+            </AnimatePresence>
+
+            {/* Forward Data Flow */}
+            <AnimatePresence>
+                {(phase === 'forward_bad' || phase === 'forward_good') && connections.map((conn, i) => (
+                    <motion.circle
+                        key={`data-${phase}-${i}`}
+                        r={3}
+                        fill={phase === 'forward_good' ? "#22c55e" : "#64748b"}
+                        initial={{ cx: conn.x1, cy: conn.y1 }}
+                        animate={{ cx: conn.x2, cy: conn.y2 }}
+                        transition={{ 
+                            duration: 0.6, 
+                            delay: Math.random() * 0.1 + (conn.layer * 0.3),
+                            ease: "linear"
+                        }}
+                    />
+                ))}
+            </AnimatePresence>
+
+            {/* Nodes */}
+            {layers.map((layer, lIdx) => (
+                <g key={lIdx}>
+                    {Array.from({ length: layer.count }).map((_, nIdx) => {
+                        const cy = 50 + (nIdx * 40) - ((layer.count-1)*20);
+                        return (
+                            <motion.circle 
+                                key={`node-${lIdx}-${nIdx}`}
+                                cx={layer.x} 
+                                cy={cy} 
+                                r={6}
+                                fill="white"
+                                stroke="#334155"
+                                strokeWidth={2}
+                                animate={{
+                                    scale: phase === 'update' ? [1, 1.2, 1] : 1,
+                                    stroke: phase === 'update' ? "#3b82f6" : "#334155"
+                                }}
+                                transition={{ duration: 0.5 }}
+                            />
+                        );
+                    })}
+                </g>
+            ))}
          </svg>
+         
+         {/* Status Indicators */}
+         <div className="absolute top-2 left-2 right-2 flex justify-between text-[10px] font-mono font-bold text-stone-400">
+            <span>EPOCH: {isTuned ? '10/10' : '0/10'}</span>
+            <span className={phase === 'backprop' ? 'text-red-500 animate-pulse' : ''}>
+                {phase === 'backprop' ? 'BACKPROPAGATING ERROR...' : phase === 'update' ? 'UPDATING WEIGHTS...' : ''}
+            </span>
+         </div>
 
-         {/* Nodes */}
-         {nodes.map(node => (
-             <button
-                key={`node-${node.id}`}
-                onClick={() => toggleNode(node.id)}
-                className={`absolute w-12 h-12 -ml-6 -mt-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 z-10 ${activeNodes.includes(node.id) ? 'bg-slate-800 border-slate-900 text-white scale-110 shadow-lg' : 'bg-white border-stone-300 hover:border-slate-500 text-stone-400'}`}
-                style={{ left: node.x, top: node.y }}
-             >
-                <Share2 size={18} />
-             </button>
-         ))}
-      </div>
-
-      <div className="mt-6 flex items-center gap-4 text-xs font-mono text-stone-500">
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-slate-800"></div> Active</div>
-          <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-full bg-white border border-stone-300"></div> Frozen</div>
+         {/* Result Popup */}
+         <AnimatePresence>
+            {phase === 'error' && (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-red-100 text-red-800 px-3 py-2 rounded border border-red-200 flex items-center gap-2 shadow-sm"
+                >
+                    <AlertCircle size={16} />
+                    <span className="text-xs font-bold">High Loss</span>
+                </motion.div>
+            )}
+            {phase === 'success' && (
+                 <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-green-100 text-green-800 px-3 py-2 rounded border border-green-200 flex items-center gap-2 shadow-sm"
+                >
+                    <CheckCircle size={16} />
+                    <span className="text-xs font-bold">Claim Extracted</span>
+                </motion.div>
+            )}
+         </AnimatePresence>
       </div>
       
-      <div className="mt-4 h-6 text-sm font-serif italic text-stone-600">
-        {activeNodes.length === 0 ? "Model idle." : `Processing tokens in ${activeNodes.length} layers.`}
-      </div>
+      <p className="mt-4 text-sm text-stone-500 text-center italic">
+         {phase === 'idle' ? 'Ready to train. ' : ''}
+         {phase === 'forward_bad' ? 'Initial forward pass with random weights.' : ''}
+         {phase === 'error' ? 'Output deviates from Gold Standard (Loss).' : ''}
+         {phase === 'backprop' ? 'Calculating gradients (Backpropagation).' : ''}
+         {phase === 'update' ? 'Optimizing weights for task.' : ''}
+         {phase === 'forward_good' ? 'Inference with fine-tuned weights.' : ''}
+         {phase === 'success' ? 'Model successfully aligned.' : ''}
+      </p>
     </div>
   );
 };
@@ -138,11 +271,6 @@ export const ResultsChartDiagram: React.FC<{ label1: string, label2: string, met
     const [dataset, setDataset] = useState<number>(0);
     
     // Data extracted from Table 2 of the paper
-    // Baseline: Regurgitation Baseline (full post) ~0.19 or Cut-to-100 ~0.24. Let's use 0.24 for "Strong Baseline".
-    // Proposed: Finetuned FLAN-T5-Large: 0.5569
-    // Middle ground: Claimify (Prompting): 0.33
-    
-    // We will show comparisons for Validation set
     const data = [
         { name: "Validation Set", baseline: 24, proposed: 56 }, // Baseline vs FLAN-T5
         { name: "Test Set", baseline: 23, proposed: 37 }        // Baseline vs FLAN-T5

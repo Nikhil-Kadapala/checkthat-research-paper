@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { HeroScene, AbstractDataScene } from './components/QuantumScene';
 import { NetworkTopologyDiagram, ProcessFlowDiagram, ResultsChartDiagram } from './components/Diagrams';
-import { ArrowDown, Menu, X, BookOpen, ExternalLink } from 'lucide-react';
+import { ArrowDown, Menu, X, BookOpen, ExternalLink, Trophy, Medal, Star } from 'lucide-react';
 
 // --- CONFIGURATION: UPDATED FOR UNH CHECKTHAT! 2025 PAPER ---
 const paperData = {
@@ -31,7 +31,7 @@ const paperData = {
   methodology: {
     heading: "Hybrid Methodology",
     description1: "We explored the design space across three categories: Fine-tuning approaches (Flan-T5, DeepSeek), Prompting strategies (Few-shot, Chain-of-Thought), and 'Frustratingly Easy' baselines.",
-    description2: "Our experiments compared raw fine-tuning efficiency against complex prompting pipelines that utilize Self-Refinement and Keyword-Based Few-Shot selection to improve claim quality."
+    description2: "Our fine-tuning approach (visualized right) adapts the weights of smaller models like FLAN-T5 (783M parameters) to mimic the specific extraction patterns of the training data, contrasting with the frozen weights of prompted giant models."
   },
   innovation: {
     heading: "Key Innovation",
@@ -46,6 +46,24 @@ const paperData = {
         proposed: "Fine-tuned Flan-T5",
         metricName: "METEOR Score"
     }
+  },
+  leaderboard: {
+    heading: "Global Leaderboard Standing",
+    description: "Our approaches demonstrated competitive performance on the official CLEF 2025 CheckThat! Task 2 leaderboard, securing top-tier positions against international research teams.",
+    achievements: [
+        {
+            rank: "9th",
+            entity: "UNH Team (Main)",
+            detail: "Achieved with Fine-tuned FLAN-T5, focusing on METEOR score optimization.",
+            icon: Trophy
+        },
+        {
+            rank: "12th",
+            entity: "Nikhil Kadapala",
+            detail: "Individual submission using 'Claimify' Self-Refinement. Outperformed competitors by focusing on nuance over raw overlap.",
+            icon: Medal
+        }
+    ]
   },
   impact: {
     heading: "Broader Impact",
@@ -111,9 +129,9 @@ const App: React.FC = () => {
           
           <div className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide text-stone-600">
             <a href="#introduction" onClick={scrollToSection('introduction')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Introduction</a>
+            <a href="#leaderboard" onClick={scrollToSection('leaderboard')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Leaderboard</a>
             <a href="#methodology" onClick={scrollToSection('methodology')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Methodology</a>
             <a href="#results" onClick={scrollToSection('results')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Results</a>
-            <a href="#impact" onClick={scrollToSection('impact')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Impact</a>
             <a 
               href={paperData.meta.link}
               target="_blank" 
@@ -135,9 +153,9 @@ const App: React.FC = () => {
       {menuOpen && (
         <div className="fixed inset-0 z-40 bg-[#F9F9FA] flex flex-col items-center justify-center gap-8 text-xl font-serif animate-fade-in">
             <a href="#introduction" onClick={scrollToSection('introduction')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Introduction</a>
+            <a href="#leaderboard" onClick={scrollToSection('leaderboard')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Leaderboard</a>
             <a href="#methodology" onClick={scrollToSection('methodology')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Methodology</a>
             <a href="#results" onClick={scrollToSection('results')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Results</a>
-            <a href="#impact" onClick={scrollToSection('impact')} className="hover:text-slate-900 transition-colors cursor-pointer uppercase">Impact</a>
             <a 
               href={paperData.meta.link}
               target="_blank" 
@@ -155,7 +173,7 @@ const App: React.FC = () => {
         <HeroScene />
         
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(249,249,250,0.92)_0%,rgba(249,249,250,0.6)_50%,rgba(249,249,250,0.3)_100%)]" />
+        <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(249,249,250,0.85)_0%,rgba(249,249,250,0.5)_50%,rgba(249,249,250,0.3)_100%)]" />
 
         <div className="relative z-10 container mx-auto px-6 text-center">
           <div className="inline-block mb-4 px-3 py-1 border border-slate-900 text-slate-900 text-xs tracking-[0.2em] uppercase font-bold rounded-full backdrop-blur-sm bg-white/30">
@@ -199,6 +217,38 @@ const App: React.FC = () => {
           </div>
         </section>
 
+        {/* Leaderboard Section */}
+        <section id="leaderboard" className="py-20 bg-slate-900 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-1/2 h-full opacity-5 bg-gradient-to-l from-blue-500 to-transparent"></div>
+            <div className="container mx-auto px-6 relative z-10">
+                <div className="text-center mb-16">
+                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-800 text-yellow-400 border border-yellow-500/30 text-xs font-bold tracking-widest uppercase rounded-full mb-6">
+                        <Trophy size={14} /> TOP PERFORMERS
+                     </div>
+                    <h2 className="font-serif text-4xl md:text-5xl mb-6">{paperData.leaderboard.heading}</h2>
+                    <p className="text-lg text-slate-300 max-w-2xl mx-auto">{paperData.leaderboard.description}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    {paperData.leaderboard.achievements.map((item, idx) => (
+                        <div key={idx} className="bg-slate-800/50 backdrop-blur-md rounded-xl p-8 border border-slate-700 hover:border-blue-500/50 transition-colors group">
+                            <div className="flex items-start justify-between mb-6">
+                                <div>
+                                    <div className="text-5xl font-serif text-white mb-2">{item.rank}</div>
+                                    <div className="text-sm uppercase tracking-widest text-blue-400 font-bold">Overall Rank</div>
+                                </div>
+                                <div className="p-3 bg-slate-700 rounded-lg group-hover:bg-blue-600 transition-colors">
+                                    <item.icon className="text-white" size={24} />
+                                </div>
+                            </div>
+                            <h3 className="text-2xl font-serif mb-3 text-white">{item.entity}</h3>
+                            <p className="text-slate-400 leading-relaxed">{item.detail}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+
         {/* Methodology: Network Diagram */}
         <section id="methodology" className="py-24 bg-white border-t border-stone-100">
             <div className="container mx-auto px-6">
@@ -223,27 +273,21 @@ const App: React.FC = () => {
         </section>
 
         {/* Innovation: Process Flow */}
-        <section className="py-24 bg-slate-900 text-stone-100 overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-                {/* Decorative background pattern - Blue/Slate theme */}
-                <div className="w-96 h-96 rounded-full bg-slate-600 blur-[100px] absolute top-[-100px] left-[-100px]"></div>
-                <div className="w-96 h-96 rounded-full bg-blue-500 blur-[100px] absolute bottom-[-100px] right-[-100px]"></div>
-            </div>
-
+        <section className="py-24 bg-[#EBEBEF] text-stone-900 border-y border-stone-300">
             <div className="container mx-auto px-6 relative z-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                      <div className="order-2 lg:order-1">
                         <ProcessFlowDiagram />
                      </div>
                      <div className="order-1 lg:order-2">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-800 text-white text-xs font-bold tracking-widest uppercase rounded-full mb-6 border border-slate-700">
-                            THE INNOVATION
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-white text-stone-900 text-xs font-bold tracking-widest uppercase rounded-full mb-6 border border-stone-300 shadow-sm">
+                            <Star size={14} className="text-yellow-500 fill-yellow-500"/> THE INNOVATION
                         </div>
-                        <h2 className="font-serif text-4xl md:text-5xl mb-6 text-white">{paperData.innovation.heading}</h2>
-                        <p className="text-lg text-stone-300 mb-6 leading-relaxed">
+                        <h2 className="font-serif text-4xl md:text-5xl mb-6 text-stone-900">{paperData.innovation.heading}</h2>
+                        <p className="text-lg text-stone-600 mb-6 leading-relaxed">
                             {paperData.innovation.description1}
                         </p>
-                        <p className="text-lg text-stone-300 leading-relaxed">
+                        <p className="text-lg text-stone-600 leading-relaxed">
                             {paperData.innovation.description2}
                         </p>
                      </div>
