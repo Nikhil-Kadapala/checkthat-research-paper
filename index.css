@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", serif;
+  --font-sans: "Inter", sans-serif;
+  --color-nobel-gold: #C5A059;
+  --color-nobel-dark: #1a1a1a;
+  --color-nobel-cream: #F9F8F4;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+}
+
+body {
+  background-color: #F9F9FA;
+  color: #1E293B;
+}
+
+@media print {
+  nav, footer, button {
+    display: none !important;
+  }
+}
